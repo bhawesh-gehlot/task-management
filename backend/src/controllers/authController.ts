@@ -1,34 +1,11 @@
 import { Response } from 'express';
-import jwt from 'jsonwebtoken';
-import type { StringValue } from 'ms';
-import User from '../models/User';
-import { AuthRequest, UserRole, ApiResponse, JwtPayload } from '../types';
-import { ApiError } from '../utils/ApiError';
+import { AuthRequest, UserRole, ApiResponse } from '../types';
 import { asyncHandler } from '../utils/asyncHandler';
-
-const generateToken = (id: string, role: UserRole): string => {
-  const payload: JwtPayload = { id, role };
-  const secret: jwt.Secret = process.env.JWT_SECRET || '';
-  const expiresIn = (process.env.JWT_EXPIRES_IN || '24h') as StringValue;
-  return jwt.sign(payload, secret, { expiresIn });
-};
+import * as authService from '../services/authService';
 
 export const register = asyncHandler(
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const { username, email, password, role } = req.body;
-
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }],
-    });
-
-    if (existingUser) {
-      const field = existingUser.email === email ? 'email' : 'username';
-      throw ApiError.conflict(`A user with this ${field} already exists`);
-    }
-
-    const user = await User.create({ username, email, password, role });
-
-    const token = generateToken(user._id.toString(), user.role as UserRole);
+    const { token, user } = await authService.registerUser(req.body);
 
     const response: ApiResponse = {
       success: true,
@@ -51,20 +28,7 @@ export const register = asyncHandler(
 export const login = asyncHandler(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const { email, password } = req.body;
-
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
-      throw ApiError.unauthorized('Invalid email or password');
-    }
-
-    const isMatch = await user.comparePassword(password);
-
-    if (!isMatch) {
-      throw ApiError.unauthorized('Invalid email or password');
-    }
-
-    const token = generateToken(user._id.toString(), user.role as UserRole);
+    const { token, user } = await authService.loginUser(email, password);
 
     const response: ApiResponse = {
       success: true,
@@ -87,13 +51,7 @@ export const login = asyncHandler(
 
 export const getProfile = asyncHandler(
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const user = await User.findById(req.user!._id)
-      .select('-password')
-      .populate('managedBy', 'username email role');
-
-    if (!user) {
-      throw ApiError.notFound('User not found');
-    }
+    const user = await authService.getUserProfile(req.user!._id.toString());
 
     const response: ApiResponse = {
       success: true,
