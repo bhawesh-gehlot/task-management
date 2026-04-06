@@ -1,6 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
@@ -9,9 +8,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { forkJoin } from 'rxjs';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { User, UserRole } from '../../../core/models';
+import { User, UserRole, ManagerWithTeams, TeamLeadWithMembers } from '../../../core/models';
 import { RoleLabelPipe } from '../../../shared/pipes/role-label.pipe';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { TeamAssignment } from '../team-assignment/team-assignment.component';
@@ -25,7 +25,6 @@ import {
   standalone: true,
   imports: [
     MatCardModule,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
@@ -45,9 +44,12 @@ export class UserList implements OnInit {
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
 
+  @ViewChild(TeamAssignment) private teamAssignment?: TeamAssignment;
+
   loading = signal(true);
-  users = signal<User[]>([]);
-  displayedColumns = ['username', 'email', 'role', 'managedBy', 'actions'];
+  managerHierarchy = signal<ManagerWithTeams[]>([]);
+  teamLeadHierarchy = signal<TeamLeadWithMembers[]>([]);
+  unassignedUsers = signal<User[]>([]);
 
   availableRoles = [
     { value: UserRole.MANAGER, label: 'Manager' },
@@ -56,29 +58,49 @@ export class UserList implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.loadUsers();
+    this.loadHierarchy();
   }
 
   isAdmin(): boolean {
     return this.authService.hasRole(UserRole.ADMIN);
   }
 
-  loadUsers(): void {
+  loadHierarchy(): void {
     this.loading.set(true);
-    this.userService.getAllUsers().subscribe({
-      next: (res) => {
-        if (res.data) this.users.set(res.data.users);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+
+    if (this.isAdmin()) {
+      forkJoin({
+        team: this.userService.getTeamMembers(),
+        unassigned: this.userService.getUnassignedUsers(),
+      }).subscribe({
+        next: ({ team, unassigned }) => {
+          if (team.data) this.managerHierarchy.set(team.data.members as ManagerWithTeams[]);
+          if (unassigned.data) {
+            this.unassignedUsers.set(
+              unassigned.data.users.filter((u) => u.role !== UserRole.MANAGER),
+            );
+          }
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+    } else {
+      this.userService.getTeamMembers().subscribe({
+        next: (res) => {
+          if (res.data) this.teamLeadHierarchy.set(res.data.members as TeamLeadWithMembers[]);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+    }
   }
 
   unassignUser(user: User): void {
     this.userService.unassignUser(user._id).subscribe({
       next: (res) => {
         this.snackBar.open(res.message, 'Close', { duration: 3000 });
-        this.loadUsers();
+        this.loadHierarchy();
+        this.teamAssignment?.loadData();
       },
       error: (err) => {
         this.snackBar.open(err.error?.message || 'Unassign failed', 'Close', {
@@ -103,7 +125,8 @@ export class UserList implements OnInit {
       this.userService.changeUserRole(user._id, newRole).subscribe({
         next: (res) => {
           this.snackBar.open(res.message, 'Close', { duration: 3000 });
-          this.loadUsers();
+          this.loadHierarchy();
+          this.teamAssignment?.loadData();
         },
         error: (err) => {
           this.snackBar.open(err.error?.message || 'Role change failed', 'Close', {
@@ -129,7 +152,8 @@ export class UserList implements OnInit {
       this.userService.deleteUser(user._id).subscribe({
         next: (res) => {
           this.snackBar.open(res.message, 'Close', { duration: 3000 });
-          this.loadUsers();
+          this.loadHierarchy();
+          this.teamAssignment?.loadData();
         },
         error: (err) => {
           this.snackBar.open(err.error?.message || 'Delete failed', 'Close', {

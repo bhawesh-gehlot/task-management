@@ -10,12 +10,102 @@
   margin-bottom: 24px;
 }
 
-.users-table-card {
+.hierarchy {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-top: 16px;
-  overflow-x: auto;
 }
 
-.full-width { width: 100%; }
+.hierarchy-card {
+  padding: 16px;
+  border-radius: 12px;
+
+  &.manager-card {
+    border-left: 4px solid #3730a3;
+  }
+
+  &.tl-card {
+    border-left: 4px solid #92400e;
+  }
+
+  &.unassigned-card {
+    border-left: 4px solid #9ca3af;
+  }
+}
+
+.hierarchy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hierarchy-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid #f0f0f0;
+  }
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .email {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+  }
+}
+
+.role-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+
+  &.manager { color: #3730a3; }
+  &.team-lead { color: #92400e; }
+  &.employee { color: #065f46; }
+  &.unassigned { color: #9ca3af; }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+}
+
+.children {
+  margin-top: 12px;
+  margin-left: 24px;
+  padding-left: 16px;
+  border-left: 2px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty-hint {
+  margin: 8px 0 0 40px;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #9ca3af;
+  padding: 24px;
+  font-style: italic;
+}
 
 .role-chip-admin { --mdc-chip-elevated-container-color: #fce7f3; --mdc-chip-label-text-color: #9d174d; }
 .role-chip-manager { --mdc-chip-elevated-container-color: #e0e7ff; --mdc-chip-label-text-color: #3730a3; }

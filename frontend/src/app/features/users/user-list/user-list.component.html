@@ -2,88 +2,216 @@
   <h1 class="page-title">User Management</h1>
 
   <mat-tab-group>
-    <mat-tab label="All Users">
+    <mat-tab label="Team Hierarchy">
       @if (loading()) {
         <app-loading-spinner />
-      } @else {
-        <mat-card class="users-table-card">
-          <table mat-table [dataSource]="users()" class="full-width">
-            <ng-container matColumnDef="username">
-              <th mat-header-cell *matHeaderCellDef>Username</th>
-              <td mat-cell *matCellDef="let user">{{ user.username }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="email">
-              <th mat-header-cell *matHeaderCellDef>Email</th>
-              <td mat-cell *matCellDef="let user">{{ user.email }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="role">
-              <th mat-header-cell *matHeaderCellDef>Role</th>
-              <td mat-cell *matCellDef="let user">
-                <mat-chip [class]="'role-chip-' + user.role">
-                  {{ user.role | roleLabel }}
-                </mat-chip>
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="managedBy">
-              <th mat-header-cell *matHeaderCellDef>Reports To</th>
-              <td mat-cell *matCellDef="let user">
-                {{ user.managedBy?.username || 'Unassigned' }}
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let user">
-                @if (user.managedBy) {
-                  <button
-                    mat-icon-button
-                    (click)="unassignUser(user)"
-                    matTooltip="Unassign"
-                  >
-                    <mat-icon>link_off</mat-icon>
-                  </button>
-                }
-                @if (isAdmin()) {
-                  <button
-                    mat-icon-button
-                    matTooltip="Change Role"
-                    [matMenuTriggerFor]="roleMenu"
-                  >
+      } @else if (isAdmin()) {
+        <div class="hierarchy">
+          @for (manager of managerHierarchy(); track manager._id) {
+            <mat-card class="hierarchy-card manager-card">
+              <div class="hierarchy-header">
+                <div class="user-info">
+                  <mat-icon class="role-icon manager">manage_accounts</mat-icon>
+                  <div>
+                    <strong>{{ manager.username }}</strong>
+                    <span class="email">{{ manager.email }}</span>
+                  </div>
+                  <mat-chip class="role-chip-manager">Manager</mat-chip>
+                </div>
+                <div class="actions">
+                  @if (manager.managedBy) {
+                    <button mat-icon-button (click)="unassignUser(manager)" matTooltip="Unassign">
+                      <mat-icon>link_off</mat-icon>
+                    </button>
+                  }
+                  <button mat-icon-button matTooltip="Change Role" [matMenuTriggerFor]="mgrRoleMenu">
                     <mat-icon>swap_vert</mat-icon>
                   </button>
-                  <mat-menu #roleMenu="matMenu">
+                  <mat-menu #mgrRoleMenu="matMenu">
                     @for (role of availableRoles; track role.value) {
-                      @if (role.value !== user.role) {
-                        <button mat-menu-item (click)="changeRole(user, role.value)">
-                          {{ role.label }}
-                        </button>
+                      @if (role.value !== manager.role) {
+                        <button mat-menu-item (click)="changeRole(manager, role.value)">{{ role.label }}</button>
                       }
                     }
                   </mat-menu>
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    matTooltip="Delete User"
-                    (click)="confirmDelete(user)"
-                  >
+                  <button mat-icon-button color="warn" matTooltip="Delete User" (click)="confirmDelete(manager)">
                     <mat-icon>delete</mat-icon>
                   </button>
-                }
-              </td>
-            </ng-container>
+                </div>
+              </div>
 
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-          </table>
-        </mat-card>
+              @if (manager.teamMembers && manager.teamMembers.length > 0) {
+                <div class="children">
+                  @for (tl of manager.teamMembers; track tl._id) {
+                    <div class="hierarchy-card tl-card">
+                      <div class="hierarchy-header">
+                        <div class="user-info">
+                          <mat-icon class="role-icon team-lead">groups</mat-icon>
+                          <div>
+                            <strong>{{ tl.username }}</strong>
+                            <span class="email">{{ tl.email }}</span>
+                          </div>
+                          <mat-chip class="role-chip-team_lead">Team Lead</mat-chip>
+                        </div>
+                        <div class="actions">
+                          <button mat-icon-button (click)="unassignUser(tl)" matTooltip="Unassign">
+                            <mat-icon>link_off</mat-icon>
+                          </button>
+                          <button mat-icon-button matTooltip="Change Role" [matMenuTriggerFor]="tlRoleMenu">
+                            <mat-icon>swap_vert</mat-icon>
+                          </button>
+                          <mat-menu #tlRoleMenu="matMenu">
+                            @for (role of availableRoles; track role.value) {
+                              @if (role.value !== tl.role) {
+                                <button mat-menu-item (click)="changeRole(tl, role.value)">{{ role.label }}</button>
+                              }
+                            }
+                          </mat-menu>
+                          <button mat-icon-button color="warn" matTooltip="Delete User" (click)="confirmDelete(tl)">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+
+                      @if (tl.teamMembers && tl.teamMembers.length > 0) {
+                        <div class="children">
+                          @for (emp of tl.teamMembers; track emp._id) {
+                            <div class="hierarchy-row">
+                              <div class="user-info">
+                                <mat-icon class="role-icon employee">person</mat-icon>
+                                <div>
+                                  <strong>{{ emp.username }}</strong>
+                                  <span class="email">{{ emp.email }}</span>
+                                </div>
+                                <mat-chip class="role-chip-employee">Employee</mat-chip>
+                              </div>
+                              <div class="actions">
+                                <button mat-icon-button (click)="unassignUser(emp)" matTooltip="Unassign">
+                                  <mat-icon>link_off</mat-icon>
+                                </button>
+                                <button mat-icon-button matTooltip="Change Role" [matMenuTriggerFor]="empRoleMenu">
+                                  <mat-icon>swap_vert</mat-icon>
+                                </button>
+                                <mat-menu #empRoleMenu="matMenu">
+                                  @for (role of availableRoles; track role.value) {
+                                    @if (role.value !== emp.role) {
+                                      <button mat-menu-item (click)="changeRole(emp, role.value)">{{ role.label }}</button>
+                                    }
+                                  }
+                                </mat-menu>
+                                <button mat-icon-button color="warn" matTooltip="Delete User" (click)="confirmDelete(emp)">
+                                  <mat-icon>delete</mat-icon>
+                                </button>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="empty-hint">No team leads assigned</p>
+              }
+            </mat-card>
+          }
+
+          @if (unassignedUsers().length > 0) {
+            <mat-card class="hierarchy-card unassigned-card">
+              <div class="hierarchy-header">
+                <div class="user-info">
+                  <mat-icon class="role-icon unassigned">person_off</mat-icon>
+                  <strong>Unassigned Users</strong>
+                </div>
+              </div>
+              <div class="children">
+                @for (user of unassignedUsers(); track user._id) {
+                  <div class="hierarchy-row">
+                    <div class="user-info">
+                      <mat-icon>person_outline</mat-icon>
+                      <div>
+                        <strong>{{ user.username }}</strong>
+                        <span class="email">{{ user.email }}</span>
+                      </div>
+                      <mat-chip [class]="'role-chip-' + user.role">{{ user.role | roleLabel }}</mat-chip>
+                    </div>
+                    <div class="actions">
+                      <button mat-icon-button matTooltip="Change Role" [matMenuTriggerFor]="uaRoleMenu">
+                        <mat-icon>swap_vert</mat-icon>
+                      </button>
+                      <mat-menu #uaRoleMenu="matMenu">
+                        @for (role of availableRoles; track role.value) {
+                          @if (role.value !== user.role) {
+                            <button mat-menu-item (click)="changeRole(user, role.value)">{{ role.label }}</button>
+                          }
+                        }
+                      </mat-menu>
+                      <button mat-icon-button color="warn" matTooltip="Delete User" (click)="confirmDelete(user)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </mat-card>
+          }
+        </div>
+      } @else {
+        <!-- Manager view: their team leads and employees -->
+        <div class="hierarchy">
+          @for (tl of teamLeadHierarchy(); track tl._id) {
+            <mat-card class="hierarchy-card tl-card">
+              <div class="hierarchy-header">
+                <div class="user-info">
+                  <mat-icon class="role-icon team-lead">groups</mat-icon>
+                  <div>
+                    <strong>{{ tl.username }}</strong>
+                    <span class="email">{{ tl.email }}</span>
+                  </div>
+                  <mat-chip class="role-chip-team_lead">Team Lead</mat-chip>
+                </div>
+                <div class="actions">
+                  <button mat-icon-button (click)="unassignUser(tl)" matTooltip="Unassign">
+                    <mat-icon>link_off</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              @if (tl.teamMembers && tl.teamMembers.length > 0) {
+                <div class="children">
+                  @for (emp of tl.teamMembers; track emp._id) {
+                    <div class="hierarchy-row">
+                      <div class="user-info">
+                        <mat-icon class="role-icon employee">person</mat-icon>
+                        <div>
+                          <strong>{{ emp.username }}</strong>
+                          <span class="email">{{ emp.email }}</span>
+                        </div>
+                        <mat-chip class="role-chip-employee">Employee</mat-chip>
+                      </div>
+                      <div class="actions">
+                        <button mat-icon-button (click)="unassignUser(emp)" matTooltip="Unassign">
+                          <mat-icon>link_off</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="empty-hint">No employees assigned</p>
+              }
+            </mat-card>
+          }
+
+          @if (teamLeadHierarchy().length === 0) {
+            <p class="empty-state">No team members assigned to you yet.</p>
+          }
+        </div>
       }
     </mat-tab>
 
     <mat-tab label="Team Assignment">
-      <app-team-assignment (userAssigned)="loadUsers()" />
+      <app-team-assignment (userAssigned)="loadHierarchy()" />
     </mat-tab>
   </mat-tab-group>
 </div>

@@ -16,10 +16,30 @@ export const getAllUsers = asyncHandler(
       throw ApiError.forbidden('Only admins and managers can view all users');
     }
 
-    const users = await User.find({ _id: { $ne: currentUser._id } })
-      .select('-password')
-      .populate('managedBy', 'username email role')
-      .sort({ role: 1, username: 1 });
+    let users;
+
+    if (currentUser.role === UserRole.ADMIN) {
+      users = await User.find({ _id: { $ne: currentUser._id } })
+        .select('-password')
+        .populate('managedBy', 'username email role')
+        .sort({ role: 1, username: 1 });
+    } else {
+      const teamLeads = await User.find({
+        managedBy: currentUser._id,
+        role: UserRole.TEAM_LEAD,
+      }).select('_id');
+      const teamLeadIds = teamLeads.map((tl) => tl._id);
+
+      users = await User.find({
+        $or: [
+          { managedBy: currentUser._id },
+          { managedBy: { $in: teamLeadIds } },
+        ],
+      })
+        .select('-password')
+        .populate('managedBy', 'username email role')
+        .sort({ role: 1, username: 1 });
+    }
 
     const response: ApiResponse = {
       success: true,
@@ -239,7 +259,9 @@ export const assignUser = asyncHandler(
 
 export const unassignUser = asyncHandler(
   async (req: AuthRequest, res: Response): Promise<void> => {
-    if (!ADMIN_OR_MANAGER.includes(req.user!.role as UserRole)) {
+    const caller = req.user!;
+
+    if (!ADMIN_OR_MANAGER.includes(caller.role as UserRole)) {
       throw ApiError.forbidden('Only admins and managers can unassign users');
     }
 
@@ -252,6 +274,23 @@ export const unassignUser = asyncHandler(
     const user = await User.findById(id);
     if (!user) {
       throw ApiError.notFound('User not found');
+    }
+
+    if (caller.role === UserRole.MANAGER) {
+      if (user.role === UserRole.TEAM_LEAD) {
+        if (user.managedBy?.toString() !== caller._id.toString()) {
+          throw ApiError.forbidden('You can only unassign team leads from your own team');
+        }
+      } else if (user.role === UserRole.EMPLOYEE) {
+        const teamLead = user.managedBy
+          ? await User.findById(user.managedBy)
+          : null;
+        if (!teamLead || teamLead.managedBy?.toString() !== caller._id.toString()) {
+          throw ApiError.forbidden('You can only unassign employees from your own team');
+        }
+      } else {
+        throw ApiError.forbidden('Managers cannot unassign this user');
+      }
     }
 
     if (user.role === UserRole.TEAM_LEAD) {

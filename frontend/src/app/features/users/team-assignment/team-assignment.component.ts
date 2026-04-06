@@ -8,6 +8,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { User, UserRole } from '../../../core/models';
@@ -60,6 +61,7 @@ export class TeamAssignment implements OnInit {
     this.userService.assignUser(user._id, targetId).subscribe({
       next: (res) => {
         this.snackBar.open(res.message, 'Close', { duration: 3000 });
+        delete this.selectedManager[user._id];
         this.loadData();
         this.userAssigned.emit();
       },
@@ -90,25 +92,20 @@ export class TeamAssignment implements OnInit {
     });
   }
 
-  private loadData(): void {
+  loadData(): void {
     this.loading.set(true);
 
-    this.userService.getUnassignedUsers(UserRole.TEAM_LEAD).subscribe({
-      next: (res) => {
-        if (res.data) this.unassignedTeamLeads.set(res.data.users);
-      },
-    });
+    forkJoin({
+      unassignedTL: this.userService.getUnassignedUsers(UserRole.TEAM_LEAD),
+      unassignedEmp: this.userService.getUnassignedUsers(UserRole.EMPLOYEE),
+      team: this.userService.getTeamMembers(),
+    }).subscribe({
+      next: ({ unassignedTL, unassignedEmp, team }) => {
+        if (unassignedTL.data) this.unassignedTeamLeads.set(unassignedTL.data.users);
+        if (unassignedEmp.data) this.unassignedEmployees.set(unassignedEmp.data.users);
 
-    this.userService.getUnassignedUsers(UserRole.EMPLOYEE).subscribe({
-      next: (res) => {
-        if (res.data) this.unassignedEmployees.set(res.data.users);
-      },
-    });
-
-    this.userService.getTeamMembers().subscribe({
-      next: (res) => {
-        if (res.data) {
-          const members = res.data.members;
+        if (team.data) {
+          const members = team.data.members;
           if (this.isAdmin()) {
             this.allManagers.set(
               members.filter((m: User) => m.role === UserRole.MANAGER) as User[],
@@ -131,6 +128,7 @@ export class TeamAssignment implements OnInit {
             );
           }
         }
+
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
