@@ -5,19 +5,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   selector: 'app-loading-spinner',
   standalone: true,
   imports: [MatProgressSpinnerModule],
-  template: `
-    <div class="spinner-container">
-      <mat-spinner [diameter]="diameter()"></mat-spinner>
-    </div>
-  `,
-  styles: `
-    .spinner-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 40px;
-    }
-  `,
+  templateUrl: './loading-spinner.component.html',
+  styleUrl: './loading-spinner.component.scss',
 })
 export class LoadingSpinner {
   diameter = input(48);

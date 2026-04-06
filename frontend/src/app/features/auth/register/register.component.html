@@ -1,0 +1,110 @@
+<div class="auth-container">
+  <mat-card class="auth-card">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+    <mat-card-header>
+      <div class="auth-header">
+        <mat-icon class="auth-icon">task_alt</mat-icon>
+        <mat-card-title>Create Account</mat-card-title>
+        <mat-card-subtitle>Join TaskFlow to manage your team</mat-card-subtitle>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" placeholder="johndoe" />
+          <mat-icon matSuffix>person</mat-icon>
+          @if (form.controls.username.hasError('required') && form.controls.username.touched) {
+            <mat-error>Username is required</mat-error>
+          }
+          @if (form.controls.username.hasError('minlength')) {
+            <mat-error>Minimum 3 characters</mat-error>
+          }
+          @if (form.controls.username.hasError('pattern')) {
+            <mat-error>Only letters, numbers, and underscores</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" placeholder="you@example.com" />
+          <mat-icon matSuffix>email</mat-icon>
+          @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (form.controls.email.hasError('email')) {
+            <mat-error>Enter a valid email</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Role</mat-label>
+          <mat-select formControlName="role">
+            @for (role of roles; track role.value) {
+              <mat-option [value]="role.value">{{ role.label }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.role.hasError('required') && form.controls.role.touched) {
+            <mat-error>Role is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            formControlName="password"
+            [type]="hidePassword() ? 'password' : 'text'"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hidePassword.set(!hidePassword())"
+          >
+            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+            <mat-error>Password is required</mat-error>
+          }
+          @if (form.controls.password.hasError('minlength')) {
+            <mat-error>Minimum 6 characters</mat-error>
+          }
+          @if (form.controls.password.hasError('pattern')) {
+            <mat-error>Must include uppercase, lowercase, and number</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Confirm Password</mat-label>
+          <input
+            matInput
+            formControlName="confirmPassword"
+            [type]="hidePassword() ? 'password' : 'text'"
+          />
+          @if (form.controls.confirmPassword.hasError('passwordMismatch')) {
+            <mat-error>Passwords do not match</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          class="full-width submit-btn"
+          [disabled]="form.invalid || loading()"
+        >
+          Create Account
+        </button>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <span>Already have an account?</span>
+      <a mat-button color="primary" routerLink="/login">Sign In</a>
+    </mat-card-actions>
+  </mat-card>
+</div>

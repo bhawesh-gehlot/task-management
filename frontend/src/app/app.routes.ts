@@ -9,43 +9,43 @@ export const routes: Routes = [
     path: 'login',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./features/auth/login/login').then((m) => m.Login),
+      import('./features/auth/login/login.component').then((m) => m.Login),
   },
   {
     path: 'register',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./features/auth/register/register').then((m) => m.Register),
+      import('./features/auth/register/register.component').then((m) => m.Register),
   },
   {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+      import('./features/dashboard/dashboard.component').then((m) => m.Dashboard),
   },
   {
     path: 'tasks',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/tasks/task-list/task-list').then((m) => m.TaskList),
+      import('./features/tasks/task-list/task-list.component').then((m) => m.TaskList),
   },
   {
     path: 'tasks/new',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/tasks/task-form/task-form').then((m) => m.TaskForm),
+      import('./features/tasks/task-form/task-form.component').then((m) => m.TaskForm),
   },
   {
     path: 'tasks/:id/edit',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/tasks/task-form/task-form').then((m) => m.TaskForm),
+      import('./features/tasks/task-form/task-form.component').then((m) => m.TaskForm),
   },
   {
     path: 'users',
     canActivate: [authGuard, roleGuard(UserRole.ADMIN, UserRole.MANAGER)],
     loadComponent: () =>
-      import('./features/users/user-list/user-list').then((m) => m.UserList),
+      import('./features/users/user-list/user-list.component').then((m) => m.UserList),
   },
   { path: '**', redirectTo: '/dashboard' },
 ];

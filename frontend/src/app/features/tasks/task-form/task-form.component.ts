@@ -19,7 +19,7 @@ import { UserService } from '../../../core/services/user.service';
 import { CreateTaskRequest, Task, TaskStatus, User, UserRole } from '../../../core/models';
 import { StatusLabelPipe } from '../../../shared/pipes/status-label.pipe';
 import { RoleLabelPipe } from '../../../shared/pipes/role-label.pipe';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-task-form',
@@ -38,124 +38,8 @@ import { LoadingSpinner } from '../../../shared/components/loading-spinner/loadi
     RoleLabelPipe,
     LoadingSpinner,
   ],
-  template: `
-    <div class="form-container">
-      <mat-card class="form-card">
-        @if (submitting()) {
-          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-        }
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>{{ isEditMode() ? 'edit' : 'add_task' }}</mat-icon>
-            {{ isEditMode() ? 'Edit Task' : 'Create New Task' }}
-          </mat-card-title>
-        </mat-card-header>
-
-        @if (loadingTask()) {
-          <app-loading-spinner />
-        } @else {
-          <mat-card-content>
-            <form [formGroup]="form" (ngSubmit)="onSubmit()">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Title</mat-label>
-                <input matInput formControlName="title" placeholder="Task title" maxlength="100" />
-                <mat-hint align="end">{{ form.controls.title.value.length }}/100</mat-hint>
-                @if (form.controls.title.hasError('required') && form.controls.title.touched) {
-                  <mat-error>Title is required</mat-error>
-                }
-                @if (form.controls.title.hasError('maxlength')) {
-                  <mat-error>Max 100 characters</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Description</mat-label>
-                <textarea
-                  matInput
-                  formControlName="description"
-                  placeholder="Task description"
-                  rows="4"
-                  maxlength="500"
-                ></textarea>
-                <mat-hint align="end">{{ form.controls.description.value.length }}/500</mat-hint>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Status</mat-label>
-                <mat-select formControlName="status">
-                  @for (status of statuses; track status) {
-                    <mat-option [value]="status">{{ status | statusLabel }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-
-              @if (!isEmployee()) {
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Assign To</mat-label>
-                  <mat-select formControlName="assignedTo">
-                    @for (user of assignableUsers(); track user._id) {
-                      <mat-option [value]="user._id">
-                        {{ user.username }} ({{ user.role | roleLabel }})
-                      </mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-              }
-
-              <div class="form-actions">
-                <button mat-button type="button" routerLink="/tasks">Cancel</button>
-                <button
-                  mat-flat-button
-                  color="primary"
-                  type="submit"
-                  [disabled]="form.invalid || submitting()"
-                >
-                  {{ isEditMode() ? 'Update Task' : 'Create Task' }}
-                </button>
-              </div>
-            </form>
-          </mat-card-content>
-        }
-      </mat-card>
-    </div>
-  `,
-  styles: `
-    .form-container {
-      max-width: 700px;
-      margin: 24px auto;
-      padding: 0 24px;
-    }
-
-    .form-card {
-      padding: 24px;
-      border-radius: 12px;
-      position: relative;
-      overflow: hidden;
-
-      mat-progress-bar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-      }
-
-      mat-card-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 22px;
-      }
-    }
-
-    .full-width { width: 100%; }
-
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      margin-top: 16px;
-    }
-  `,
+  templateUrl: './task-form.component.html',
+  styleUrl: './task-form.component.scss',
 })
 export class TaskForm implements OnInit {
   private fb = inject(FormBuilder);

@@ -1,0 +1,119 @@
+@if (loading()) {
+  <app-loading-spinner />
+} @else {
+  <div class="assignment-grid">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person_add</mat-icon> Assign Team Leads
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ isAdmin() ? 'Assign unassigned team leads to a manager' : 'Assign unassigned team leads to yourself' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (unassignedTeamLeads().length === 0) {
+          <p class="empty-state">No unassigned team leads available.</p>
+        } @else if (isAdmin()) {
+          @for (user of unassignedTeamLeads(); track user._id) {
+            <div class="assign-row">
+              <div class="user-info">
+                <mat-icon>person</mat-icon>
+                <div>
+                  <strong>{{ user.username }}</strong>
+                  <br />
+                  <small>{{ user.email }}</small>
+                </div>
+              </div>
+              <div class="assign-controls">
+                <mat-form-field appearance="outline" class="team-lead-select">
+                  <mat-label>Manager</mat-label>
+                  <mat-select [(ngModel)]="selectedManager[user._id]">
+                    @for (mgr of allManagers(); track mgr._id) {
+                      <mat-option [value]="mgr._id">{{ mgr.username }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  [disabled]="!selectedManager[user._id]"
+                  (click)="assignTeamLead(user, selectedManager[user._id])"
+                >
+                  Assign
+                </button>
+              </div>
+            </div>
+            <mat-divider></mat-divider>
+          }
+        } @else {
+          <mat-list>
+            @for (user of unassignedTeamLeads(); track user._id) {
+              <mat-list-item>
+                <mat-icon matListItemIcon>person</mat-icon>
+                <span matListItemTitle>{{ user.username }}</span>
+                <span matListItemLine>{{ user.email }}</span>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  matListItemMeta
+                  (click)="assignTeamLead(user)"
+                >
+                  Assign to Me
+                </button>
+              </mat-list-item>
+            }
+          </mat-list>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>group_add</mat-icon> Assign Employees
+        </mat-card-title>
+        <mat-card-subtitle>
+          Assign unassigned employees to a team lead
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (unassignedEmployees().length === 0) {
+          <p class="empty-state">No unassigned employees available.</p>
+        } @else {
+          @for (user of unassignedEmployees(); track user._id) {
+            <div class="assign-row">
+              <div class="user-info">
+                <mat-icon>person_outline</mat-icon>
+                <div>
+                  <strong>{{ user.username }}</strong>
+                  <br />
+                  <small>{{ user.email }}</small>
+                </div>
+              </div>
+              <div class="assign-controls">
+                <mat-form-field appearance="outline" class="team-lead-select">
+                  <mat-label>Team Lead</mat-label>
+                  <mat-select [(ngModel)]="selectedTeamLead[user._id]">
+                    @for (lead of myTeamLeads(); track lead._id) {
+                      <mat-option [value]="lead._id">{{ lead.username }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  [disabled]="!selectedTeamLead[user._id]"
+                  (click)="assignEmployee(user)"
+                >
+                  Assign
+                </button>
+              </div>
+            </div>
+            <mat-divider></mat-divider>
+          }
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+}

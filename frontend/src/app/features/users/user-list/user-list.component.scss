@@ -1,0 +1,23 @@
+.users-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.users-table-card {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.full-width { width: 100%; }
+
+.role-chip-admin { --mdc-chip-elevated-container-color: #fce7f3; --mdc-chip-label-text-color: #9d174d; }
+.role-chip-manager { --mdc-chip-elevated-container-color: #e0e7ff; --mdc-chip-label-text-color: #3730a3; }
+.role-chip-team_lead { --mdc-chip-elevated-container-color: #fef3c7; --mdc-chip-label-text-color: #92400e; }
+.role-chip-employee { --mdc-chip-elevated-container-color: #d1fae5; --mdc-chip-label-text-color: #065f46; }

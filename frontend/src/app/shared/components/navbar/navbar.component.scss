@@ -1,0 +1,56 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+
+  .app-title {
+    font-size: 20px;
+    font-weight: 600;
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
+.navbar-links {
+  display: flex;
+  gap: 4px;
+  margin-left: 24px;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &.active-link {
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+}
+
+.navbar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-menu-header {
+  line-height: 1.4;
+  white-space: normal;
+}
+
+@media (max-width: 768px) {
+  .navbar-links span {
+    display: none;
+  }
+}

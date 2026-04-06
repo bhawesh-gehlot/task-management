@@ -2,7 +2,7 @@ import { Component, inject, OnInit, OnDestroy, effect } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { SocketService } from './core/services/socket.service';
-import { Navbar } from './shared/components/navbar/navbar';
+import { Navbar } from './shared/components/navbar/navbar.component';
 
 @Component({
   selector: 'app-root',

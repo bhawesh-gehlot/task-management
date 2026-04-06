@@ -1,0 +1,112 @@
+<div class="task-list-container">
+  <div class="page-header">
+    <h1>Tasks</h1>
+    <button mat-flat-button color="primary" routerLink="/tasks/new">
+      <mat-icon>add</mat-icon> New Task
+    </button>
+  </div>
+
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Search</mat-label>
+          <input matInput [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" placeholder="Search tasks..." />
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="statusFilter" (ngModelChange)="loadTasks()">
+            <mat-option value="">All</mat-option>
+            <mat-option [value]="TaskStatus.PENDING">Pending</mat-option>
+            <mat-option [value]="TaskStatus.IN_PROGRESS">In Progress</mat-option>
+            <mat-option [value]="TaskStatus.COMPLETED">Completed</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        @if (authService.hasRole(UserRole.ADMIN, UserRole.MANAGER, UserRole.TEAM_LEAD)) {
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Assigned To</mat-label>
+            <mat-select [(ngModel)]="assignedToFilter" (ngModelChange)="loadTasks()">
+              <mat-option value="">All</mat-option>
+              @for (user of assignableUsers(); track user._id) {
+                <mat-option [value]="user._id">{{ user.username }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  @if (loading()) {
+    <app-loading-spinner />
+  } @else if (tasks().length === 0) {
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <mat-icon class="empty-icon">assignment</mat-icon>
+        <h3>No tasks found</h3>
+        <p>Create a new task to get started.</p>
+        <button mat-flat-button color="primary" routerLink="/tasks/new">
+          <mat-icon>add</mat-icon> Create Task
+        </button>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="tasks-grid">
+      @for (task of tasks(); track task._id) {
+        <mat-card class="task-card" [class]="'status-' + task.status">
+          <mat-card-header>
+            <mat-card-title>{{ task.title }}</mat-card-title>
+            <mat-card-subtitle>
+              Assigned to: {{ getUsername(task.assignedTo) }}
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            @if (task.description) {
+              <p class="task-description">{{ task.description }}</p>
+            }
+            <div class="task-meta">
+              <mat-chip-set>
+                <mat-chip [class]="'chip-' + task.status">
+                  {{ task.status | statusLabel }}
+                </mat-chip>
+              </mat-chip-set>
+              <span class="task-date">{{ task.updatedAt | date:'medium' }}</span>
+            </div>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            <button mat-icon-button matTooltip="Edit" (click)="editTask(task)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            @if (authService.hasRole(UserRole.ADMIN, UserRole.MANAGER, UserRole.TEAM_LEAD)) {
+              <button mat-icon-button matTooltip="Reassign" [matMenuTriggerFor]="reassignMenu">
+                <mat-icon>swap_horiz</mat-icon>
+              </button>
+              <mat-menu #reassignMenu="matMenu">
+                @for (user of assignableUsers(); track user._id) {
+                  <button mat-menu-item (click)="reassignTask(task, user._id)">
+                    {{ user.username }} ({{ user.role }})
+                  </button>
+                }
+              </mat-menu>
+            }
+            <button mat-icon-button matTooltip="Delete" (click)="confirmDelete(task)">
+              <mat-icon color="warn">delete</mat-icon>
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+
+    <mat-paginator
+      [length]="pagination()?.total ?? 0"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[5, 10, 25]"
+      [pageIndex]="currentPage - 1"
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+    ></mat-paginator>
+  }
+</div>

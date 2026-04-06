@@ -1,0 +1,59 @@
+<mat-toolbar color="primary" class="navbar">
+  <div class="navbar-brand">
+    <mat-icon>task_alt</mat-icon>
+    <span class="app-title" routerLink="/dashboard">TaskFlow</span>
+  </div>
+
+  <nav class="navbar-links">
+    <a
+      mat-button
+      routerLink="/dashboard"
+      routerLinkActive="active-link"
+    >
+      <mat-icon>dashboard</mat-icon>
+      <span>Dashboard</span>
+    </a>
+    <a
+      mat-button
+      routerLink="/tasks"
+      routerLinkActive="active-link"
+    >
+      <mat-icon>assignment</mat-icon>
+      <span>Tasks</span>
+    </a>
+    @if (authService.hasRole(UserRole.ADMIN, UserRole.MANAGER)) {
+      <a
+        mat-button
+        routerLink="/users"
+        routerLinkActive="active-link"
+      >
+        <mat-icon>people</mat-icon>
+        <span>Users</span>
+      </a>
+    }
+  </nav>
+
+  <div class="navbar-actions">
+    <mat-chip-set>
+      <mat-chip highlighted>
+        {{ (currentUser()?.role ?? '') | roleLabel }}
+      </mat-chip>
+    </mat-chip-set>
+
+    <button mat-icon-button [matMenuTriggerFor]="userMenu">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+    <mat-menu #userMenu="matMenu">
+      <div class="user-menu-header" mat-menu-item disabled>
+        <strong>{{ currentUser()?.username }}</strong>
+        <br />
+        <small>{{ currentUser()?.email }}</small>
+      </div>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
+    </mat-menu>
+  </div>
+</mat-toolbar>
